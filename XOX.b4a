@@ -1,0 +1,179 @@
+﻿Version=3.2
+IconFile=
+NumberOfModules=0
+Package=XOX.Android
+DoNotOverwriteManifest=False
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: http://www.basic4ppc.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="4" android:targetSdkVersion="14"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~'End of default text.~\n~
+UserTypesHint=
+NumberOfFiles=2
+File1=computer.bal
+File2=Main.bal
+NumberOfLibraries=2
+Library1=core
+Library2=stringutils
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: XOX
+	#VersionCode: 1
+	#VersionName: 
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: portrait
+	#CanInstallToExternalStorage: False
+	
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: True
+	#IncludeTitle: False
+#End Region
+
+Sub Process_Globals
+	'These global variables will be declared once when the application starts.
+	'These variables can be accessed from all modules.
+	
+End Sub
+
+Sub Globals
+	'These global variables will be redeclared each time the activity is created.
+	'These variables can only be accessed from this module.
+	Dim ButtonsText(3,3) As String
+	Private main_pnl As Panel
+	Private lbl As Label
+	Private player_lbl As Label
+	Dim buttons(3,3) As Button
+	Dim j,i As Int =0
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	'Do not forget to load the layout file created with the visual designer. For example:
+	Activity.LoadLayout("Main")
+	main_pnl.SetLayout(0,0,100%x,100%y)
+	main_pnl.Color = Colors.Black
+	lbl.Text = "Current Player :"
+	player_lbl.Text ="X"
+	
+	Activity.AddMenuItem("Restart","restart")
+	
+	
+
+	Dim width, offsetX, offsetY As Int
+    width = 70dip
+    offsetX = ((100%x - width * 10 - 2dip * 9) /2  ) + 230dip
+    offsetY = (100%y - width * 3 - 2dip * 2) - 150dip
+
+	 For i = 0 To 2
+        For j = 0 To 2
+            Dim b As Button
+            b.Initialize("button") 'All buttons share the same event sub
+            b.TextSize = 25
+			
+            Activity.AddView(b,offsetX + i * (width + 20dip), offsetY + j * (width + 20dip), width, width)
+            buttons(i, j) = b 'store a reference to this view
+        Next
+    Next
+	
+End Sub
+
+
+
+Sub restart_Click
+	NewGame
+End Sub
+
+
+Sub button_Click
+	Dim b As Button
+	b = Sender
+	If b.Text <> "" Then Return
+	b.Text = player_lbl.Text
+	
+	If player_lbl.Text ="X" Then 
+		player_lbl.Text ="O" 
+	Else
+		player_lbl.Text="X"
+	End If
+	
+	If CheckIfWin( b.Text ) Then 
+		'we have a winner
+		Msgbox("The winner is: " & b.Text, "")
+		NewGame
+		Return
+	End If
+	
+	Dim freeCellLeft As Boolean
+	freeCellLeft = False
+	For x = 0 To 2
+		For y = 0 To 2
+			freeCellLeft = freeCellLeft OR buttons(x, y).Text = ""
+		Next
+	Next
+	If freeCellLeft = False Then
+		Msgbox("Both lost!", "")
+		NewGame
+	End If
+End Sub
+
+Sub NewGame
+	For x = 0 To 2
+		For y = 0 To 2
+			buttons(x, y).Text = ""
+		Next
+	Next
+	player_lbl.Text = "X"
+End Sub
+
+
+Sub CheckIfWin (Player As String) As Boolean
+	'Check columns
+	Dim found As Boolean
+	For x = 0 To 2
+		found = True
+		For y = 0 To 2
+			found = found AND buttons(x, y).Text = Player
+		Next
+		If found = True Then Return True
+	Next
+	'Check rows
+	For y = 0 To 2
+		found = True
+		For x = 0 To 2
+			found = found AND buttons(x, y).Text = Player
+		Next
+		If found = True Then Return True
+	Next
+	'Check diagonals
+	found = True
+	For i = 0 To 2
+		found = found AND buttons(i, i).Text = Player
+	Next
+	If found = True Then Return True
+	
+	found = True
+	For i = 0 To 2
+		found = found AND buttons(i, 2 - i).Text = Player
+	Next
+	If found = True Then Return True
+	Return False
+End Sub
+
+Sub Activity_Resume
+	For i = 0 To 2
+		For j = 0 To 2
+			buttons(i, j).Text = ButtonsText(i, j)
+		Next
+	Next
+				
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+If UserClosed Then
+		'If the user pressed on the back key we cancel the current game
+		NewGame
+	End If
+	'save the current state when the activity is paused.
+	For i = 0 To 2
+		For j = 0 To 2
+			ButtonsText(i,j) = buttons(i,j).Text
+		Next
+	Next
+End Sub
